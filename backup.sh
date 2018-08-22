@@ -2,15 +2,36 @@
 # usage:
 # ./hamwan_routers.sh | ./backup.sh
 
-DIR=backup
+DIR=$(dirname "${BASH_SOURCE[0]}")/backup
+LIMIT=8
+
+write_if_not_empty () {
+	head=$(dd bs=1 count=1 2>/dev/null; echo a)
+	head=${head%a}
+	if [ "x$head" != x"" ]; then
+		{ printf %s "$head"; cat; } > "$@"
+	fi
+}
 
 mkdir -p "$DIR"
 cd "$DIR"
 
 while read router
 do
-	echo Backing up "$router"...
-	ssh -n "$router" '/export hide-sensitive' > "$router"
+	echo Backing up "$router"... 1>&2
+	ssh -n "$router" '/export hide-sensitive' | write_if_not_empty "$router" &
+
+	# only allow $LIMIT concurrent jobs
+	until [ $(jobs -p | wc -l) -lt $LIMIT ]
+	do
+		sleep 1
+	done
+done
+
+# wait for all jobs to complete
+for job in $(jobs -p)
+do
+	wait $job
 done
 
 git init
