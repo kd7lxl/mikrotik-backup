@@ -3,4 +3,4 @@
 json=$(curl -s https://encrypted.hamwan.org/host/ansible.json)
 hamwan=$(jq -r '.HamWAN[]' <<< "$json" | sort -u)
 mikrotik=$(jq -r '.mikrotik[]' <<< "$json" | sort -u)
-comm -12 <(echo "$hamwan") <(echo "$mikrotik")
+comm -12 <(echo "$hamwan") <(echo "$mikrotik") | sort -R
