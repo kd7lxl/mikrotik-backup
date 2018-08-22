@@ -20,6 +20,7 @@ while read router
 do
 	echo Backing up "$router"... 1>&2
 	ssh -n "$router" '/export hide-sensitive' | write_if_not_empty "$router" &
+	ssh -n "$router" "/system backup save name=$router " && scp "$router":"$router".backup . &
 
 	# only allow $LIMIT concurrent jobs
 	until [ $(jobs -p | wc -l) -lt $LIMIT ]
